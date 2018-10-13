@@ -1,6 +1,5 @@
-import search
-import utils
-
+from search import Problem
+from search import depth_first_tree_search
 
 # board example
 b1 = [["_","O","O","O","_"], ["O","_","O","_","O"], ["_","O","_","O","_"],["O","_","O","_","_"], ["_","O","_","_","_"]]
@@ -80,6 +79,10 @@ def board_moves(board):
 
 def board_perform_move(board, move):
 
+    """
+    Performs the given move on the board 
+    returning the resulting board
+    """
 
     new_board = [i[:] for i in board]
     f = move_final(move)
@@ -106,13 +109,53 @@ def board_perform_move(board, move):
     return new_board
 
 
-print(board_perform_move(b1, [(0, 2), (0, 0)]))
-print(b1)
+class sol_state:
 
+    def __init__(self, board):
+       
+        self.board = board
 
-            
+    def peg_number(self):
         
+        number = 0
 
+        for lines in self.board:
+            for c in lines:
+                if is_peg(c):
+                    number += 1
+        
+        return number
+
+
+class solitaire(Problem):
+
+    """Models a Solitaire problem as a satisfaction problem.
+    A solution cannot have more than 1 peg left on the board.
+    """
+    
+    def __init__(self, board):
+        self.board = board
+        self.initial = sol_state(board)
+
+    def actions(self, state):
+
+        return board_moves(state.board)
+
+    def result(self, state, action):
+        
+        b = board_perform_move(state.board, action)
+        return sol_state(b)
+ 
+    def goal_test(self, state):
+        
+        return state.peg_number() == 1
+ 
+    #def path_cost(self, c, state1, action, state2):
+    
+    #def h(self, node):
+        """
+        Needed for informed search.
+        """
 
 
 
