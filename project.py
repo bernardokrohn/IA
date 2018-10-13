@@ -1,5 +1,5 @@
-#import search
-#mport utils
+import search
+import utils
 
 
 # board example
@@ -38,6 +38,10 @@ def move_initial(move):
 def move_final(move):
     return move[1] 
 
+#TAI board
+
+
+
 def board_moves(board):
 
     """
@@ -71,10 +75,44 @@ def board_moves(board):
                     moves.append(make_move(make_pos(i, j - 2), make_pos(i, j)))
     return moves
 
+#print(board_moves(b1))
 
 
+def board_perform_move(board, move):
 
-print(board_moves(b1))
+
+    new_board = [i[:] for i in board]
+    f = move_final(move)
+    i = move_initial(move)
+    f_l = pos_l(f)
+    i_l = pos_l(i)
+    f_c = pos_c(f)
+    i_c = pos_c(i)
+
+    if f_l == i_l:
+
+        m_l = f_l
+        m_c = (f_c + 1) if i_c > f_c else (i_c + 1)
+    
+    elif f_c == i_c:
+        
+        m_c = f_c
+        m_l = (f_l + 1) if i_l > f_l else (i_l + 1)
+
+    new_board[i_l][i_c] = c_empty()
+    new_board[m_l][m_c] = c_empty()
+    new_board[f_l][f_c] = c_peg()
+
+    return new_board
+
+
+print(board_perform_move(b1, [(0, 2), (0, 0)]))
+print(b1)
+
+
+            
+        
+
 
 
 
