@@ -1,5 +1,6 @@
 from search import Problem
 from search import depth_first_tree_search
+from search import depth_first_graph_search
 
 # board example
 b1 = [["_","O","O","O","_"], ["O","_","O","_","O"], ["_","O","_","O","_"],["O","_","O","_","_"], ["_","O","_","_","_"]]
@@ -117,6 +118,9 @@ class sol_state:
 
     def peg_number(self):
         
+        """
+        Returns the number of pegs on the saved board
+        """
         number = 0
 
         for lines in self.board:
@@ -139,26 +143,49 @@ class solitaire(Problem):
 
     def actions(self, state):
 
+        """
+        Returns the list of board moves performable on the board
+        of the given state
+        """
+
         return board_moves(state.board)
 
     def result(self, state, action):
         
+        """
+        Returns the resulting state from performing the given move
+        on the given state
+        """
+
         b = board_perform_move(state.board, action)
         return sol_state(b)
  
     def goal_test(self, state):
         
+        """
+        Returns whether there is exactly 1 peg left on the board
+        on the given state
+        """
+
         return state.peg_number() == 1
- 
+
     #def path_cost(self, c, state1, action, state2):
     
     #def h(self, node):
-        """
-        Needed for informed search.
-        """
+    #    """
+    #    Needed for informed search.
+    #    """
 
 
+problem = solitaire(b1)
 
+n1 = depth_first_graph_search(problem)
+s1 = n1.state
+print(s1.board)
+
+n2 = depth_first_tree_search(problem)
+s2 = n2.state
+print(s2.board)
 
 
 
