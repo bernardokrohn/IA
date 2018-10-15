@@ -1,10 +1,17 @@
 from search import Problem
 from search import depth_first_tree_search
 from search import depth_first_graph_search
+from search import breadth_first_search
+from search import breadth_first_tree_search
+from search import iterative_deepening_search
+from search import depth_limited_search
+from search import recursive_best_first_search
+from search import compare_graph_searchers
+from search import compare_searchers
+
 
 # board example
-b1 = [["_","O","O","O","_"], ["O","_","O","_","O"], ["_","O","_","O","_"],["O","_","O","_","_"], ["_","O","_","_","_"]]
-
+b1 = [["_","O","O","_","_"], ["O","_","_","_","_"], ["_","_","_","_","_"],["_","_","_","_","_"], ["_","_","_","_","_"]]
 #TAI content
 
 def c_peg():
@@ -44,7 +51,7 @@ def move_final(move):
 
 def board_moves(board):
 
-    """
+    """ 
     Returns a list with all valid moves possible
     on the passed board
     """
@@ -110,25 +117,24 @@ def board_perform_move(board, move):
     return new_board
 
 
+def peg_number(board):
+    
+    number = 0
+
+    for lines in board:
+        for c in lines:
+            if is_peg(c):
+                number += 1
+    return number
+
+
 class sol_state:
 
-    def __init__(self, board):
+    def __init__(self, board, peg_number):
        
         self.board = board
+        self.peg_number = peg_number
 
-    def peg_number(self):
-        
-        """
-        Returns the number of pegs on the saved board
-        """
-        number = 0
-
-        for lines in self.board:
-            for c in lines:
-                if is_peg(c):
-                    number += 1
-        
-        return number
 
 
 class solitaire(Problem):
@@ -139,7 +145,8 @@ class solitaire(Problem):
     
     def __init__(self, board):
         self.board = board
-        self.initial = sol_state(board)
+        self.peg_number = peg_number(board) 
+        self.initial = sol_state(board, self.peg_number)
 
     def actions(self, state):
 
@@ -158,7 +165,7 @@ class solitaire(Problem):
         """
 
         b = board_perform_move(state.board, action)
-        return sol_state(b)
+        return sol_state(b, state.peg_number - 1)
  
     def goal_test(self, state):
         
@@ -167,27 +174,49 @@ class solitaire(Problem):
         on the given state
         """
 
-        return state.peg_number() == 1
+        return state.peg_number == 1
 
     #def path_cost(self, c, state1, action, state2):
     
-    #def h(self, node):
-    #    """
-    #    Needed for informed search.
-    #    """
+    
+    def h(self, node):
+        """
+        Needed for informed search.
+        """
+        
+        s = node.state
+        return s.peg_number - 1
 
 
 problem = solitaire(b1)
 
-n1 = depth_first_graph_search(problem)
+n1 = breadth_first_tree_search(problem)
 s1 = n1.state
 print(s1.board)
 
-n2 = depth_first_tree_search(problem)
+n2 = breadth_first_search(problem)
 s2 = n2.state
 print(s2.board)
 
+n3 = depth_first_graph_search(problem)
+s3 = n3.state
+print(s3.board)
 
+n4 = iterative_deepening_search(problem)
+s4 = n4.state
+print(s4.board)
+
+n5 = depth_limited_search(problem)
+s5 = n5.state
+print(s5.board)
+
+n6 = recursive_best_first_search(problem)
+s6 = n6.state
+print(s6.board)
+
+compare_searchers([problem], ['Search', 'solitaire'])
+
+compare_graph_searchers()
 
 
 
