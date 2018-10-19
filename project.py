@@ -1,17 +1,28 @@
-from search import Problem
-from search import depth_first_tree_search
-from search import depth_first_graph_search
-from search import breadth_first_search
-from search import breadth_first_tree_search
-from search import iterative_deepening_search
-from search import depth_limited_search
-from search import recursive_best_first_search
-from search import compare_graph_searchers
-from search import compare_searchers
-
+from search import *
 
 # board example
-b1 = [["_","O","O","_","_"], ["O","_","_","_","_"], ["_","_","_","_","_"],["_","_","_","_","_"], ["_","_","_","_","_"]]
+b5x5 = [["_","O","O","O","_"],
+        ["O","_","O","_","O"],
+        ["_","O","_","O","_"],
+        ["O","_","O","_","_"],
+        ["_","O","_","_","_"]]
+
+b4x4 = [["O","O","O","X"],
+        ["O","O","O","O"],
+        ["O","_","O","O"],
+        ["O","O","O","O"]]
+
+b4x5 = [["O","O","O","X","X"],
+        ["O","O","O","O","O"],
+        ["O","_","O","_","O"],
+        ["O","O","O","O","O"]]
+
+b4x6 = [["O","O","O","X","X","X"],
+        ["O","_","O","O","O","O"],
+        ["O","O","O","O","O","O"],
+        ["O","O","O","O","O","O"]]
+
+
 #TAI content
 
 def c_peg():
@@ -56,30 +67,33 @@ def board_moves(board):
     on the passed board
     """
 
-    board_size = len(board)
     moves = []
+    board_height = len(board)
+    board_width = len(board[0])
 
-    for i in range(0, board_size):
+    if board_height > 0 :
+        for i in range(board_height):
+            if board_width > 0:
+                for j in range(board_width):
 
-        for j in range(0, board_size):
+                    if is_peg(board[i][j]):
 
-            if is_empty(board[i][j]):
+                        if j > 1 and is_peg(board[i][j - 1]) and is_empty(board[i][j - 2]):
+                        
+                            moves.append(make_move(make_pos(i, j), make_pos(i, j - 2)))
 
-                if i > 1 and is_peg(board[i - 1][j]) and is_peg(board[i - 2][j]):
-                
-                    moves.append(make_move(make_pos(i - 2, j), make_pos(i, j)))
-                
-                if i < board_size - 2 and is_peg(board[i + 1][j]) and is_peg(board[i + 2][j]):
-                
-                    moves.append(make_move(make_pos(i + 2, j), make_pos(i, j)))
-                
-                if j < board_size - 2 and is_peg(board[i][j + 1]) and is_peg(board[i][j + 2]):
-                
-                    moves.append(make_move(make_pos(i, j + 2), make_pos(i, j)))
-                
-                if j > 1 and is_peg(board[i][j - 1]) and is_peg(board[i][j - 2]):
-                
-                    moves.append(make_move(make_pos(i, j - 2), make_pos(i, j)))
+                        if i > 1 and is_peg(board[i - 1][j]) and is_empty(board[i - 2][j]):
+                        
+                            moves.append(make_move(make_pos(i, j), make_pos(i - 2, j)))
+                        
+                        if i < board_height - 2 and is_peg(board[i + 1][j]) and is_empty(board[i + 2][j]):
+                        
+                            moves.append(make_move(make_pos(i, j), make_pos(i + 2, j)))
+                        
+                        if j < board_width - 2 and is_peg(board[i][j + 1]) and is_empty(board[i][j + 2]):
+                        
+                            moves.append(make_move(make_pos(i, j), make_pos(i, j + 2)))
+                        
     return moves
 
 #print(board_moves(b1))
@@ -93,6 +107,7 @@ def board_perform_move(board, move):
     """
 
     new_board = [i[:] for i in board]
+    #new_board = copy.deepcopy(board)
     f = move_final(move)
     i = move_initial(move)
     f_l = pos_l(f)
@@ -127,13 +142,35 @@ def peg_number(board):
                 number += 1
     return number
 
+def board_dispersion(board):
+
+    dispersion = 0
+    peg_number = 0
+
+    board_height = len(board)
+    board_width = len(board[0])
+
+    for i in range(board_height):
+        for j in range(board_width):
+            if is_peg(board[i][j]):
+                peg_number += 1
+                for ii in range(board_height):
+                    for jj in range(board_width):
+                        if is_peg(board[ii][jj]):
+                            dispersion += abs(ii - i) + abs(jj -j)
+    return dispersion/peg_number
+
 
 class sol_state:
 
-    def __init__(self, board, peg_number):
-       
+    def __init__(self, board):
         self.board = board
-        self.peg_number = peg_number
+        self.peg_number = peg_number(board)
+        self.moves = board_moves(board)
+        self.board_dispersion = board_dispersion(board)
+
+    def __lt__(self, other):
+        return self.board_dispersion > other.board_dispersion
 
 
 
@@ -144,9 +181,7 @@ class solitaire(Problem):
     """
     
     def __init__(self, board):
-        self.board = board
-        self.peg_number = peg_number(board) 
-        self.initial = sol_state(board, self.peg_number)
+        self.initial = sol_state(board)
 
     def actions(self, state):
 
@@ -155,7 +190,7 @@ class solitaire(Problem):
         of the given state
         """
 
-        return board_moves(state.board)
+        return state.moves
 
     def result(self, state, action):
         
@@ -165,7 +200,8 @@ class solitaire(Problem):
         """
 
         b = board_perform_move(state.board, action)
-        return sol_state(b, state.peg_number - 1)
+        s = sol_state(b) 
+        return s
  
     def goal_test(self, state):
         
@@ -176,20 +212,21 @@ class solitaire(Problem):
 
         return state.peg_number == 1
 
-    #def path_cost(self, c, state1, action, state2):
-    
+   # def path_cost(self, c, state1, action, state2):
+
     
     def h(self, node):
+        
         """
         Needed for informed search.
         """
         
         s = node.state
-        return s.peg_number - 1
+        return board_dispersion(s.board)
 
 
-problem = solitaire(b1)
-
+problem = solitaire(b4x5)
+"""
 n1 = breadth_first_tree_search(problem)
 s1 = n1.state
 print(s1.board)
@@ -213,10 +250,17 @@ print(s5.board)
 n6 = recursive_best_first_search(problem)
 s6 = n6.state
 print(s6.board)
+"""
+compare_searchers([problem], ['Searcher', 'solitaire'])
 
-compare_searchers([problem], ['Search', 'solitaire'])
+"""
+def greedy_search(problem, h=None):
 
-compare_graph_searchers()
+    h = memoize(h or problem.h, 'h')
+    return best_first_graph_search(problem, h)
 
-
+n7 = greedy_search(problem)
+s7 = n7.state
+print(s7.board)
+"""
 
