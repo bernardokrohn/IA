@@ -1,37 +1,6 @@
 from search import *
 
-# board example
-b5x5 = [["_","O","O","O","_"],
-        ["O","_","O","_","O"],
-        ["_","O","_","O","_"],
-        ["O","_","O","_","_"],
-        ["_","O","_","_","_"]]
-
-b4x4 = [["O","O","O","X"],
-        ["O","O","O","O"],
-        ["O","_","O","O"],
-        ["O","O","O","O"]]
-
-b4x5 = [["O","O","O","X","X"],
-        ["O","O","O","O","O"],
-        ["O","_","O","_","O"],
-        ["O","O","O","O","O"]]
-
-b4x6 = [["O","O","O","X","X","X"],
-        ["O","_","O","O","O","O"],
-        ["O","O","O","O","O","O"],
-        ["O","O","O","O","O","O"]]
-
-b4x5 = [["O","O","O","X","X"],
-       ["O","O","O","O","O"],
-       ["O","_","O","_","O"],
-       ["O","O","O","O","O"]]
-
-
-
-
 #TAI content
-
 def c_peg():
     return "O"
 def c_empty():
@@ -55,16 +24,13 @@ def pos_c(pos):
     return pos[1] 
 
  # TAI move
-# Lista [p_initial, p_final]
+ # Lista [p_initial, p_final]
 def make_move(i, f):
     return [i, f]
 def move_initial(move):
     return move[0]
 def move_final(move):
     return move[1] 
-
-#TAI board
-
 
 
 def board_moves(board):
@@ -81,25 +47,23 @@ def board_moves(board):
     for i in range(board_height):
         for j in range(board_width):
             if is_peg(board[i][j]):
-                if i < board_height - 2 and is_peg(board[i + 1][j]) and is_empty(board[i + 2][j]):
-                
-                    moves.append(make_move(make_pos(i, j), make_pos(i + 2, j)))
-
                 if j > 1 and is_peg(board[i][j - 1]) and is_empty(board[i][j - 2]):
                 
                     moves.append(make_move(make_pos(i, j), make_pos(i, j - 2)))
-
+                
                 if i > 1 and is_peg(board[i - 1][j]) and is_empty(board[i - 2][j]):
                 
                     moves.append(make_move(make_pos(i, j), make_pos(i - 2, j)))
-                
+
                 if j < board_width - 2 and is_peg(board[i][j + 1]) and is_empty(board[i][j + 2]):
                 
                     moves.append(make_move(make_pos(i, j), make_pos(i, j + 2)))
+               
+                if i < board_height - 2 and is_peg(board[i + 1][j]) and is_empty(board[i + 2][j]):
+                
+                    moves.append(make_move(make_pos(i, j), make_pos(i + 2, j)))
                         
     return moves
-
-#print(board_moves(b1))
 
 
 def board_perform_move(board, move):
@@ -110,7 +74,6 @@ def board_perform_move(board, move):
     """
 
     new_board = [i[:] for i in board]
-    #new_board = copy.deepcopy(board)
     f = move_final(move)
     i = move_initial(move)
     f_l = pos_l(f)
@@ -135,7 +98,7 @@ def board_perform_move(board, move):
     return new_board
 
 
-def board_value(board):
+def board_value(board, board_moves):
 
     """
     Examines the given board for number of pegs, empty spaces
@@ -148,6 +111,8 @@ def board_value(board):
     solo_pegs = 0
     board_height = len(board)
     board_width = len(board[0])
+    no_play_pegs = 0
+    dispersion = 0
 
     if is_peg(board[0][0]):
         corner += 1
@@ -162,32 +127,42 @@ def board_value(board):
         for j in range(board_width):
             if is_peg(board[i][j]):
                 pegs += 1
+                is_play = 1
+                for m in board_moves:
+                    if (i,j) in m:
+                        is_play = 0
+                        break;
+
                 if (i > 0 and not(is_peg(board[i-1][j])) and
                     j > 0 and not(is_peg(board[i][j-1])) and
                     i < board_height - 1 and not(is_peg(board[i+1][j])) and
                     j < board_width - 1 and not(is_peg(board[i][j+1]))):
 
-                    solo_pegs += 1                
+                    solo_pegs += 1
+                no_play_pegs += is_play 
+
+                for ii in range(board_height):
+                    for jj in range(board_width):
+                        if is_peg(board[ii][jj]):
+                            dispersion += abs(ii - i) + abs(jj -j)   
+                            
             elif is_empty(board[i][j]):
                 empty += 1
-
-    return (pegs, empty, corner, solo_pegs)
+            
+    return (pegs, empty, corner, solo_pegs, no_play_pegs, dispersion/pegs)
 
 
 class sol_state:
 
     def __init__(self, board):
-        self.board = board
-        b = board_value(board)
-        self.peg_number = b[0]
-        self.empty = b[1]
+        self.board = board 
         self.board_moves = board_moves(board)
-        self.corner = b[2]
-        self.solo_pegs = b[3]
+        b = board_value(board, self.board_moves)
+        self.peg_number = b[0]
+        self.value =  b[4] + b[5]
 
     def __lt__(self, other):
-        return self.peg_number > other.peg_number
-
+        return self.peg_number >  other.peg_number
 
 
 class solitaire(Problem):
@@ -229,7 +204,7 @@ class solitaire(Problem):
         return state.peg_number == 1
 
     def path_cost(self, c, state1, action, state2):
-        return state1.peg_number - state2.peg_number
+        return c + 1
     
     def h(self, node):
         
@@ -238,45 +213,4 @@ class solitaire(Problem):
         """
         
         s = node.state
-        return s.solo_pegs + s.corner - len(s.board_moves) / min(s.empty,s.peg_number)
-
-"""
-problem = solitaire(b4x6)
-
-n1 = breadth_first_tree_search(problem)
-s1 = n1.state
-print(s1.board)
-
-n2 = breadth_first_search(problem)
-s2 = n2.state
-print(s2.board)
-
-n3 = depth_first_graph_search(problem)
-s3 = n3.state
-print(s3.board)
-
-n4 = iterative_deepening_search(problem)
-s4 = n4.state
-print(s4.board)
-
-n5 = depth_limited_search(problem)
-s5 = n5.state
-print(s5.board)
-
-n6 = recursive_best_first_search(problem)
-path = n6.path()
-for n in path:
-    print(n.state.board)
-
-compare_searchers([problem], ['Searcher', 'solitaire'])
-
-
-def greedy_search(problem, h=None):
-
-    h = memoize(h or problem.h, 'h')
-    return best_first_graph_search(problem, h)
-
-n7 = greedy_search(problem)
-s7 = n7.state
-print(s7.board)
-"""
+        return s.value

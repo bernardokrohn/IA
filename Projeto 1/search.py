@@ -401,7 +401,10 @@ def astar_search(problem, h=None):
 
 # ______________________________________________________________________________
 # Other search algorithms
+def greedy_search(problem, h=None):
 
+    h = memoize(h or problem.h, 'h')
+    return best_first_graph_search(problem, h)
 
 def recursive_best_first_search(problem, h=None):
     """[Figure 3.26]"""
